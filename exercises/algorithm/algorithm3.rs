@@ -3,10 +3,45 @@
 	This problem requires you to implement a sorting algorithm
 	you can use bubble sorting, insertion sorting, heap sorting, etc.
 */
-// I AM NOT DONE
 
-fn sort<T>(array: &mut [T]){
-	//TODO
+struct QuickSort<T>(std::marker::PhantomData<T>);
+
+impl<T> QuickSort<T>
+where
+    T: PartialOrd + Copy,
+{
+    pub fn sort(array: &mut [T], low: usize, high: usize) {
+        if low < high {
+            let p = Self::partition(array, low, high);
+            if p > 0 {
+                Self::sort(array, low, p - 1);
+            }
+            Self::sort(array, p + 1, high);
+        }
+    }
+
+    fn partition(arr: &mut [T], low: usize, high: usize) -> usize {
+        let pivot = arr[high];
+        let mut i = low;
+
+        for j in low..high {
+            if arr[j] < pivot {
+                arr.swap(i, j);
+                i += 1;
+            }
+        }
+
+        arr.swap(i, high);
+        i
+    }
+}
+
+fn sort<T>(array: &mut [T])
+where
+    T: PartialOrd + Copy,
+{
+    QuickSort::sort(array, 0, array.len() - 1);
+
 }
 #[cfg(test)]
 mod tests {

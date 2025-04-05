@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -69,15 +68,126 @@ impl<T> LinkedList<T> {
             },
         }
     }
-	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
-	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+
+    pub fn merge(mut list_a: LinkedList<T>, mut list_b: LinkedList<T>) -> Self
+    where
+        T: PartialOrd,
+    {
+        let mut node_a = list_a.start;
+        let mut node_b = list_b.start;
+        let length = list_a.length + list_b.length;
+
+        // Drop the list_a and list_b
+        list_a.start = None;
+        list_a.end = None;
+        list_a.length = 0;
+        list_b.start = None;
+        list_b.end = None;
+        list_b.length = 0;
+
+        let mut start = None;
+        let mut end = None;
+
+        // SAFETY:
+        // All nodes from start to end are valid
+        unsafe {
+            let mut current = None;
+
+            loop {
+                // Pick the smaller node between node_a and node_b
+                let next_ptr = match (node_a, node_b) {
+                    (Some(a), Some(b)) => {
+                        if (*a.as_ptr()).val < (*b.as_ptr()).val {
+                            node_a = (*a.as_ptr()).next;
+                            a
+                        } else {
+                            node_b = (*b.as_ptr()).next;
+                            b
+                        }
+                    }
+                    (Some(a), None) => {
+                        node_a = (*a.as_ptr()).next;
+                        a
+                    }
+                    (None, Some(b)) => {
+                        node_b = (*b.as_ptr()).next;
+                        b
+                    }
+                    // If both empty, break
+                    (None, None) => break,
+                };
+
+                // Move the cursor to the next node
+                current = match current {
+                    // First, set the start of the list
+                    None => {
+                        start = Some(next_ptr);
+                        Some(next_ptr)
+                    }
+                    // Otherwise, set the next node of the current node
+                    Some(cur) => {
+                        (*cur.as_ptr()).next = Some(next_ptr);
+                        Some(next_ptr)
+                    }
+                };
+            }
+
+            // Cursor to the end of the list
+            end = current;
+            while let Some(next_node) = end {
+                match (*next_node.as_ptr()).next {
+                    Some(_) => end = (*next_node.as_ptr()).next,
+                    None => break,
+                }
+            }
         }
-	}
+
+        LinkedList {
+            length,
+            start,
+            end,
+        }
+    }
+
+    #[deprecated]
+    pub fn merge_old(mut list_a: LinkedList<T>, mut list_b: LinkedList<T>) -> Self
+    where
+        T: PartialOrd + Copy, // TODO: remove copy
+    {
+        let mut list_c = LinkedList::<T>::new();
+        let mut i = 0i32;
+        let mut j = 0i32;
+
+        loop {
+            let val_a = list_a.get_ith_node(list_a.start, i);
+            let val_b = list_b.get_ith_node(list_b.start, j);
+
+            match (val_a, val_b) {
+                (Some(val_a), Some(val_b)) => {
+                    if val_a < val_b {
+                        list_c.add(*val_a);
+                        i += 1;
+                    } else {
+                        list_c.add(*val_b);
+                        j += 1;
+                    }
+                }
+                _ => break,
+            }
+        }
+
+        while let Some(next_a) = list_a.get_ith_node(list_a.start, i) {
+            list_c.add(*next_a);
+            i += 1;
+        }
+
+        while let Some(next_b) = list_b.get_ith_node(list_b.start, j) {
+            list_c.add(*next_b);
+            j += 1;
+        }
+
+        list_c
+    }
 }
 
 impl<T> Display for LinkedList<T>
